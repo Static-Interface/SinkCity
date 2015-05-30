@@ -9,7 +9,8 @@ public enum CitySettings {
     MOBS(0b0000_0010),
     TNT_BUILD(0b0000_0100),
     TNT_EXPLODE(0b0000_1000),
-    EXPLOSION(0b0001_0000);
+    EXPLOSION(0b0001_0000),
+    OPEN_CITY(0b0010_0000);
 
     private int activatedPattern;
 
