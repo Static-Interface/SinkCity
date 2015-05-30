@@ -13,7 +13,7 @@ public class SinkCityCommand extends SinkCommand {
     }
 
     @Override
-    protected boolean onExecute(CommandSender sender, String label, String[] args) throws ParseException {
+    protected boolean onExecute(CommandSender commandSender, String label, String[] args) throws ParseException {
         return false;
     }
 

@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 import de.static_interface.sinkcity.DatabaseConfiguration;
 import de.static_interface.sinkcity.LanguageConfiguration;
@@ -44,7 +45,7 @@ public class MySQLDatabaseHandler extends DatabaseHandler {
             Statement statement = this.connection.createStatement();
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS cities(cityname TEXT, cityid VARCHAR(36), worldid VARCHAR(36))");
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS citydata(cityid VARCHAR(36), mayorid VARCHAR(36), citysettings BIGINT, spawnX INT, spawnY INT, spawnZ INT)");
-            statement.executeUpdate("CREATE TABLE IF NOT EXISTS chunks(coordx INT, coordz INT, ownerid VARCHAR(36), cityid VARCHAR(36), homechunk TINYINT)");
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS chunks(coordx INT, coordz INT, ownerid VARCHAR(36), cityid VARCHAR(36), homechunk TINYINT, worldid VARCHAR(36))");
         } catch (SQLException e) {
             this.connection = null;
             Bukkit.getLogger().log(Level.SEVERE, LanguageConfiguration.getString("Database.ConnectionFailed"), e);
@@ -55,20 +56,24 @@ public class MySQLDatabaseHandler extends DatabaseHandler {
     @Override
     public boolean storeCity(City city) {
         try {
-            // null is not allowed as a city name.
+            // "null" is not allowed as a city name.
             if (city.getCityName().equalsIgnoreCase("null"))
                 return false;
 
-            ResultSet set = this.connection.getMetaData().getTables(null, null, city.getCityId().toString(), null);
+            PreparedStatement preparedStatement = this.connection.prepareStatement("SELECT * FROM cities WHERE cityid=?");
+            preparedStatement.setString(1, city.getCityId().toString());
+            ResultSet set = preparedStatement.executeQuery();
             if (!set.next()) {
                 // City doesn't exist.
-                PreparedStatement preparedStatement = this.connection.prepareStatement("INSERT INTO cities(?, ?, ?)");
+                set.close();
+                preparedStatement.close();
+                preparedStatement = this.connection.prepareStatement("INSERT INTO cities VALUES(?, ?, ?)");
                 preparedStatement.setString(1, city.getCityName());
                 preparedStatement.setString(2, city.getCityId().toString());
                 preparedStatement.setString(3, city.getWorld().getUID().toString());
                 preparedStatement.executeUpdate();
                 preparedStatement.close();
-                preparedStatement = this.connection.prepareStatement("INSERT INTO citydata(?, ?, ?, ?, ?, ?)");
+                preparedStatement = this.connection.prepareStatement("INSERT INTO citydata VALUES(?, ?, ?, ?, ?, ?)");
                 preparedStatement.setString(1, city.getCityId().toString());
                 preparedStatement.setString(2, city.getMayor().toString());
                 preparedStatement.setInt(3, city.getCitySettings());
@@ -78,16 +83,17 @@ public class MySQLDatabaseHandler extends DatabaseHandler {
                 preparedStatement.executeUpdate();
                 preparedStatement.close();
                 for (Chunk chunk : city.getChunks()) {
-                    preparedStatement = this.connection.prepareStatement("INSERT INTO chunks(?, ?, ?, ?, ?)");
+                    preparedStatement = this.connection.prepareStatement("INSERT INTO chunks VALUES(?, ?, ?, ?, ?, ?)");
                     preparedStatement.setInt(1, chunk.getX());
                     preparedStatement.setInt(2, chunk.getZ());
                     preparedStatement.setNull(3, Types.VARCHAR);
                     preparedStatement.setString(4, city.getCityId().toString());
                     preparedStatement.setInt(5, (city.getHomeChunk() == chunk ? 1 : 0));
+                    preparedStatement.setString(6, chunk.getWorld().getUID().toString());
                     preparedStatement.executeUpdate();
                     preparedStatement.close();
                 }
-                String sttmnt = String.format("CREATE TABLE `%s`(residentid VARCHAR(36), assistant TINYINT)", city.getCityId());
+                String sttmnt = String.format("CREATE TABLE `%s`(residentid VARCHAR(36), assistant TINYINT DEFAULT 0)", city.getCityId());
                 Statement statement = this.connection.createStatement();
                 statement.execute(sttmnt);
                 statement.close();
@@ -96,16 +102,17 @@ public class MySQLDatabaseHandler extends DatabaseHandler {
                     preparedStatement = this.connection.prepareStatement(sttmnt);
                     preparedStatement.setString(1, uuid.toString());
                     preparedStatement.setInt(2, city.getAssistants().contains(uuid) ? 1 : 0);
+                    preparedStatement.executeUpdate();
                     preparedStatement.close();
                 }
+                return true;
             } else {
-                // City exists.
-
+                return false;
             }
         } catch (SQLException e) {
-
+            Bukkit.getLogger().log(Level.SEVERE, "An SQL Exception caused the storing of a city to fail.", e);
+            return false;
         }
-        return false;
     }
 
     @Override
@@ -231,8 +238,6 @@ public class MySQLDatabaseHandler extends DatabaseHandler {
     @Override
     public Map<Chunk, UUID> getBoughtChunks(String cityName) {
         Map<Chunk, UUID> boughtChunks = new HashMap<Chunk, UUID>();
-        // cities(cityname TEXT, cityid VARCHAR(36), worldid VARCHAR(36))
-        // chunks(coordx INT, coordz INT, ownerid VARCHAR(36), cityid VARCHAR(36), homechunk TINYINT)
         UUID worldId, cityId;
         World world;
         try {
@@ -271,22 +276,100 @@ public class MySQLDatabaseHandler extends DatabaseHandler {
         return boughtChunks;
     }
 
+    @Override
+    public synchronized boolean dropCity(City city) {
+        try {
+            PreparedStatement preparedStatement = this.connection.prepareStatement("DELETE FROM cities WHERE cityid=? LIMIT 1");
+            preparedStatement.setString(1, city.getCityId().toString());
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
+            preparedStatement = this.connection.prepareStatement("DELETE FROM citydata WHERE cityid=? LIMIT 1");
+            preparedStatement.setString(1, city.getCityId().toString());
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
+            preparedStatement = this.connection.prepareStatement("DELETE FROM chunks WHERE cityid=? LIMIT 1");
+            preparedStatement.setString(1, city.getCityId().toString());
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
+            Statement statement = this.connection.createStatement();
+            statement.executeUpdate(String.format("DROP TABLE IF EXISTS `%s`", city.getCityId().toString()));
+            statement.close();
+            this.previouslyLoadedCities.remove(city.getCityName());
+            return true;
+        } catch (SQLException e) {
+            Bukkit.getLogger().log(Level.SEVERE, "An SQL exception occurred while deleting a city.", e);
+            return false;
+        }
+    }
+
+    @Override
+    public synchronized boolean renameCity(City city, String newCityName) {
+        try {
+            PreparedStatement statement = this.connection.prepareStatement("UPDATE cities SET cityname=? WHERE cityid=? LIMIT 1");
+            statement.setString(1, newCityName);
+            statement.setString(2, city.getCityId().toString());
+            statement.executeUpdate();
+            statement.close();
+            this.previouslyLoadedCities.remove(city.getCityName());
+            city.setCityName(newCityName);
+            this.previouslyLoadedCities.put(newCityName, city);
+            return true;
+        } catch (SQLException e) {
+            Bukkit.getLogger().log(Level.SEVERE, "An SQL Exception occurred while renaming a city.", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean addPlayerToCity(Player player, City city) {
+        try {
+            String sttmnt = String.format("INSERT INTO `%s` VALUES(residentid) VALUES(?)", city.getCityId().toString());
+            PreparedStatement statement = this.connection.prepareStatement(sttmnt);
+            statement.setString(1, player.getUniqueId().toString());
+            statement.executeUpdate();
+            statement.close();
+            return true;
+        } catch (SQLException e) {
+            Bukkit.getLogger().log(Level.SEVERE, "An SQL Exception occurred while adding a resident to a city.", e);
+            return false;
+        }
+    }
+
     /*
      * cities(cityname TEXT, cityid VARCHAR(36), worldid VARCHAR(36))
      * citydata(cityid VARCHAR(36), mayorid VARCHAR(36), citysettings BIGINT, spawnX INT, spawnY INT, spawnZ INT)
-     * chunks(coordx INT, coordz INT, ownerid VARCHAR(36), cityid VARCHAR(36), homechunk TINYINT
+     * chunks(coordx INT, coordz INT, ownerid VARCHAR(36), cityid VARCHAR(36), homechunk TINYINT, worldid VARCHAR(36)
      */
 
     @Override
-    public synchronized boolean dropCity(City city) {
-
-        return false;
+    public City cityAt(Chunk chunk) {
+        try {
+            PreparedStatement statement = this.connection.prepareStatement("SELECT * FROM chunks WHERE coordx=? AND coordz=? AND worldid=?");
+            statement.setInt(1, chunk.getX());
+            statement.setInt(2, chunk.getZ());
+            statement.setString(3, chunk.getWorld().getUID().toString());
+            ResultSet set = statement.executeQuery();
+            if (!set.next()) {
+                return null;
+            } else {
+                String cityIdString = set.getString("cityid");
+                UUID cityId = UUID.fromString(cityIdString);
+                set.close();
+                statement.close();
+                statement = this.connection.prepareStatement("SELECT cityname FROM cities WHERE cityid=?");
+                statement.setString(1, cityId.toString());
+                set = statement.executeQuery();
+                set.next();
+                String cityName;
+                cityName = set.getString("cityname");
+                City city = loadCity(cityName);
+                set.close();
+                statement.close();
+                return city;
+            }
+        } catch (SQLException e) {
+            Bukkit.getLogger().log(Level.SEVERE, "An SQL Exception occurred while looking up a city.", e);
+            return null;
+        }
     }
-
-    @Override
-    public synchronized boolean renameCity(String oldCityName, String newCityName) {
-        // TODO
-        return false;
-    }
-
 }

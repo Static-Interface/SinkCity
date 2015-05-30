@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Chunk;
+import org.bukkit.entity.Player;
 
 public abstract class DatabaseHandler {
 
@@ -57,13 +58,31 @@ public abstract class DatabaseHandler {
     public abstract Map<Chunk, UUID> getBoughtChunks(String cityName);
 
     /**
-     * Renames a city in the database. This happens only if the old city name
-     * matches {@link String#equalsIgnoreCase(String)} with the parameter.
+     * Renames a city in the database.
      * 
-     * @param oldCityName
+     * @param city
      * @param newCityName
      * @return <code>true</code> if the renaming progress ended successfully,
      *         else false.
      */
-    public abstract boolean renameCity(String oldCityName, String newCityName);
+    public abstract boolean renameCity(City city, String newCityName);
+
+    /**
+     * Adds a player's {@link UUID} to a city to make him a resident of that
+     * {@link City}.
+     * 
+     * @param player
+     * @param city
+     * @return
+     */
+    public abstract boolean addPlayerToCity(Player player, City city);
+
+    /**
+     * Looks up if there are any cities situated in that chunk and returns it if
+     * there are any.
+     * 
+     * @param chunk
+     * @return
+     */
+    public abstract City cityAt(Chunk chunk);
 }

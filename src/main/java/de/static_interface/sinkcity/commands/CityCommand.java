@@ -1,21 +1,24 @@
 package de.static_interface.sinkcity.commands;
 
 import static de.static_interface.sinkcity.LanguageConfiguration.getString;
+import static de.static_interface.sinkcity.SinkCity.prefix;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Level;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.cli.ParseException;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
 import de.static_interface.sinkcity.SinkCity;
 import de.static_interface.sinkcity.database.City;
 import de.static_interface.sinklibrary.api.command.SinkCommand;
+import de.static_interface.sinklibrary.api.sender.IrcCommandSender;
 import de.static_interface.sinklibrary.configuration.LanguageConfiguration;
 import de.static_interface.sinklibrary.util.BukkitUtil;
 import de.static_interface.sinklibrary.util.StringUtil;
@@ -27,19 +30,19 @@ public class CityCommand extends SinkCommand {
     }
 
     @Override
-    protected boolean onExecute(CommandSender sender, String label, String[] args) throws ParseException {
+    protected boolean onExecute(CommandSender commandSender, String label, String[] args) throws ParseException {
         if (args.length < 1) {
-            // Send usage.
-            return false;
+            sendHelp(commandSender, label, null);
+            return true;
         }
 
-        Bukkit.getLogger().log(Level.SEVERE, this.getPermission());
-        Bukkit.getLogger().log(Level.SEVERE, String.valueOf(sender.hasPermission(this.getPermission())));
-
         switch (args[0].toLowerCase()) {
+            case "help":
+                sendHelp(commandSender, label, args.length == 1 ? null : args[1].toLowerCase());
+                return true;
             case "create":
-                if (args.length < 3) {
-                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&', LanguageConfiguration.m("General.TooFewArguments")));
+                if (args.length < 2) {
+                    commandSender.sendMessage(prefix + LanguageConfiguration.m("General.TooFewArguments"));
                     return true;
                 }
 
@@ -49,65 +52,150 @@ public class CityCommand extends SinkCommand {
                 Player mayor;
                 City city;
 
-                if (args.length == 3) {
+                if (args.length == 2) {
                     // The new mayor is the sender.
-                    if (sender instanceof CommandSender) {
-                        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', LanguageConfiguration.m("General.ConsoleNotAvailable")));
+                    if (commandSender instanceof ConsoleCommandSender) {
+                        commandSender.sendMessage(prefix + LanguageConfiguration.m("General.ConsoleNotAvailable"));
                         return true;
                     }
-                    cityName = args[0];
-                    mayor = BukkitUtil.getPlayer(sender.getName());
+                    cityName = args[1];
+                    mayor = BukkitUtil.getPlayer(commandSender.getName());
                     spawn = mayor.getLocation();
                     city = new City(cityName, cityId, spawn, mayor);
                 } else {
                     // The sender is a different player than the mayor.
-                    cityName = args[0];
-                    mayor = BukkitUtil.getPlayer(args[3]);
+                    cityName = args[1];
+                    mayor = BukkitUtil.getPlayer(args[2]);
                     if (mayor == null) {
-                        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', LanguageConfiguration.m("General.UserNotFound", args[3])));
+                        commandSender.sendMessage(prefix + StringUtil.format(LanguageConfiguration.m("General.UserNotFound", args[3])));
                         return true;
                     }
                     spawn = mayor.getLocation();
                     city = new City(cityName, cityId, spawn, mayor);
                 }
 
-                SinkCity.databaseHandler.storeCity(city);
+                if (SinkCity.getDatabaseHandler().storeCity(city)) {
+                    commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.CreationSucceed"), city.getCityName()));
+                } else {
+                    commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.CreationFailed"), city.getCityName()));
+                }
                 return true;
             case "delete":
-                if (args.length < 1) {
-                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&', LanguageConfiguration.m("General.TooFewArguments")));
+                if (args.length < 2) {
+                    commandSender.sendMessage(prefix + StringUtil.format(LanguageConfiguration.m("General.TooFewArguments")));
                     return true;
                 }
 
                 cityName = args[1];
-                List<City> cities = SinkCity.databaseHandler.getAvailableCities();
-                for (City c : cities) {
-                    if (c.getCityName().equalsIgnoreCase(cityName)) {
-                        city = SinkCity.databaseHandler.loadCity(cityName);
-                        sender.sendMessage(SinkCity.prefix + StringUtil.format(getString("SinkCity.City.DeletionStarted"), cityName));
-                        long start = System.currentTimeMillis();
-                        SinkCity.databaseHandler.dropCity(city);
-                        long end = System.currentTimeMillis();
-                        long neededTime = (end - start) / 1000;
-                        sender.sendMessage(SinkCity.prefix + StringUtil.format(getString("SinkCity.City.DeletionFinished"), cityName, neededTime));
-                        return true;
+                city = SinkCity.getDatabaseHandler().loadCity(cityName);
+                if (city.getCityName().equalsIgnoreCase(cityName)) {
+                    city = SinkCity.getDatabaseHandler().loadCity(cityName);
+                    commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.DeletionStarted"), cityName));
+                    boolean result = SinkCity.getDatabaseHandler().dropCity(city);
+                    if (result) {
+                        commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.DeletionFinished"), cityName));
+                    } else {
+                        commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.DeletionFailed"), city.getCityName()));
                     }
+                    return true;
+                } else {
+                    commandSender.sendMessage(prefix + getString("SinkCity.City.NotFound"));
+                    return true;
                 }
-                return false;
             case "list":
-                cities = SinkCity.databaseHandler.getAvailableCities();
-                sender.sendMessage(SinkCity.prefix + getString("SinkCity.City.List.Start"));
+                List<City> cities = SinkCity.getDatabaseHandler().getAvailableCities();
+                commandSender.sendMessage(prefix + getString("SinkCity.City.List.Start"));
                 if (cities.isEmpty()) {
-                    sender.sendMessage(SinkCity.prefix + getString("SinkCity.City.List.NoCities"));
+                    commandSender.sendMessage(prefix + getString("SinkCity.City.List.NoCities"));
                     return true;
                 } else {
                     for (City c : cities) {
-                        sender.sendMessage(SinkCity.prefix + StringUtil.format(getString("SinkCity.City.List.Format"), c.getCityName(), c.getResidents().size(), c.getWorld().getName()));
+                        commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.List.Format"), c.getCityName(), c.getResidents().size(), c.getWorld().getName()));
                     }
                     return true;
                 }
+            case "here":
+                if ((commandSender instanceof ConsoleCommandSender) || (commandSender instanceof IrcCommandSender)) {
+                    commandSender.sendMessage(prefix + StringUtil.format(LanguageConfiguration.m("General.ConsoleNotAvailable")));
+                    return true;
+                }
+                Player player = ((Player) commandSender);
+                city = SinkCity.getDatabaseHandler().cityAt(player.getLocation().getChunk());
+                if (city == null) {
+                    commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.NoCityHere")));
+                } else {
+                    commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.Here"), city.getCityName()));
+                }
+                return true;
+            case "join":
+                if (args.length <= 1) {
+                    sendHelp(commandSender, label, "join");
+                    return true;
+                }
+                if (!(commandSender instanceof Player)) {
+                    commandSender.sendMessage(StringUtil.format(LanguageConfiguration.m("General.ConsoleNotAvailable")));
+                    return true;
+                }
+                player = ((Player) commandSender);
+                cityName = args[1];
+                city = SinkCity.getDatabaseHandler().loadCity(cityName);
+
+                if (SinkCity.getDatabaseHandler().addPlayerToCity(player, city)) {
+                    commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.JoinSucceed"), city.getCityName()));
+                    Player target;
+                    String displayName = BukkitUtil.getNameByUniqueId(player.getUniqueId());
+                    for (UUID uuid : city.getResidents()) {
+                        target = Bukkit.getPlayer(uuid);
+                        if (target == null)
+                            continue;
+                        target.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.ResidentJoined"), displayName, city.getCityName()));
+                    }
+                    return true;
+                } else {
+                    commandSender.sendMessage(prefix + StringUtil.format(getString("SinkCity.City.JoinFailed"), city.getCityName()));
+                    return true;
+                }
             default:
-                return false;
+                sendHelp(commandSender, label, null);
+                return true;
+        }
+    }
+
+    private static void sendHelp(CommandSender commandSender, String label, @Nullable String subCommand) {
+        String s = StringUtil.format(prefix + "/" + label + " ");
+        if (subCommand == null) {
+            commandSender.sendMessage(prefix + StringUtil.format(getString("Help.AvailableCommands")));
+            commandSender.sendMessage(s + "create");
+            commandSender.sendMessage(s + "delete");
+            commandSender.sendMessage(s + "list");
+            commandSender.sendMessage(s + "join");
+            commandSender.sendMessage(s + "here");
+            commandSender.sendMessage(s + "leave");
+            commandSender.sendMessage(s + String.format("help <%s>", getString("Help.Command")));
+        } else {
+            switch (subCommand) {
+                case "create":
+                    commandSender.sendMessage(s + "create <cityname> [mayor]: " + getString("SinkCity.City.Help.Create"));
+                    return;
+                case "delete":
+                    commandSender.sendMessage(s + "delete <city>: " + getString("SinkCity.City.Help.Delete"));
+                    return;
+                case "list":
+                    commandSender.sendMessage(s + "list: " + getString("SinkCity.City.Help.List"));
+                    return;
+                case "join":
+                    commandSender.sendMessage(s + "join <cityname>: " + getString("SinkCity.City.Help.Join"));
+                    return;
+                case "leave":
+                    commandSender.sendMessage(s + "leave <cityname>: " + getString("SinkCity.City.Help.Leave"));
+                    return;
+                case "here":
+                    commandSender.sendMessage(s + "here: " + getString("SinkCity.City.Help.Here"));
+                    return;
+                default:
+                    commandSender.sendMessage(prefix + getString("Help.CommandNotAvailable"));
+                    return;
+            }
         }
     }
 }

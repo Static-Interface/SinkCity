@@ -87,6 +87,10 @@ public class City {
         this.ownedChunks = ownedChunks;
     }
 
+    protected void setCityName(String cityName) {
+        this.cityName = cityName;
+    }
+
     public World getWorld() {
         return this.world;
     }

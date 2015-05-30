@@ -15,7 +15,7 @@ public class SinkCity extends JavaPlugin {
 
     public static final String prefix = ChatColor.AQUA + "[" + ChatColor.DARK_GREEN + "SinkCity" + ChatColor.AQUA + "] " + ChatColor.RESET;
 
-    public static DatabaseHandler databaseHandler;
+    private static DatabaseHandler databaseHandler;
 
     private CityCommand cityCommand = new CityCommand(this);
 
@@ -32,5 +32,9 @@ public class SinkCity extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
         }
         SinkLibrary.getInstance().registerCommand("city", this.cityCommand);
+    }
+
+    public static DatabaseHandler getDatabaseHandler() {
+        return databaseHandler;
     }
 }
