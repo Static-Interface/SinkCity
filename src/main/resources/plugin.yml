@@ -38,7 +38,7 @@ commands:
         permission: sinkcity.plot.*
 
 permissions:
-    permission: sinkcity.management.*
+    sinkcity.management.*:
         description: Allows all sinkcity management commands.
         default: op
         children:
@@ -48,7 +48,7 @@ permissions:
             sinkcity.management.clock: true
             sinkcity.management.statistics: true
             sinkcity.management.version: false
-    permission: sinkcity.plot.*
+    sinkcity.plot.*:
         description: Allows all commands related to inner-city plots.
         default: op
         children:
@@ -57,7 +57,7 @@ permissions:
             sinkcity.plot.offer: true
             sinkcity.plot.listbought: true
 
-    permission: sinkcity.war.*
+    sinkcity.war.*:
         description: Allows initiating and ending a war.
         default: op
         children:
@@ -65,7 +65,7 @@ permissions:
             sinkcity.war.end: false
             sinkcity.war.info: true
 
-    permission: sinkcity.resident.*
+    sinkcity.resident.*:
         description: Allows all commands related to residents.
         default: op
         children:
@@ -76,7 +76,7 @@ permissions:
             sinkcity.resident.friend: true
             sinkcity.resident.spawn: true
 
-    permission: sinkcity.city.*
+    sinkcity.city.*:
         description: Allows all city commands.
         default: op
         children:
