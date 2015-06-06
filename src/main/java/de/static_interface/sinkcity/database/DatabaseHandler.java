@@ -15,10 +15,17 @@ public abstract class DatabaseHandler {
      * 
      * @param city
      *            The city to store.
-     * @return <code>true</code> if the city was stored without problems, else
-     *         <code>false</code>.
+     * @return
      */
-    public abstract boolean storeCity(City city);
+    public abstract ResultCode storeCity(City city);
+
+    /**
+     * Updates a {@link City} in the database.
+     * 
+     * @param city
+     * @return
+     */
+    public abstract ResultCode updateCity(City city);
 
     /**
      * Builds a {@link City} instance from the information stored in the
@@ -27,22 +34,23 @@ public abstract class DatabaseHandler {
      * 
      * @param cityName
      *            The name of the city to load.
+     * @param reloadFromDatabase
+     *            If this is <code>true</code>, the cache will be updated using
+     *            the data from the database which will revert any changes which
+     *            were not synchronized to the database yet.
      * @return A {@link City} instance or <code>null</code> if an exception
      *         occurred or the city doesn't exist.
      */
-    public abstract City loadCity(String cityName);
+    public abstract City loadCity(String cityName, boolean reloadFromDatabase);
 
     /**
      * Drops a city from the database, deleting it completely.
      * 
      * @param city
      *            The {@link City} instance to delete.
-     * @return <code>true</code> if the city got dropped successfully, else
-     *         false. If <code>false</code> is returned, it doesn't necessarily
-     *         mean that the city is still in the database completely or in
-     *         pieces.
+     * @return
      */
-    public abstract boolean dropCity(City city);
+    public abstract ResultCode dropCity(City city);
 
     /**
      * @return A list of all cities that are stored in the database. Never
@@ -62,10 +70,9 @@ public abstract class DatabaseHandler {
      * 
      * @param city
      * @param newCityName
-     * @return <code>true</code> if the renaming progress ended successfully,
-     *         else false.
+     * @return
      */
-    public abstract boolean renameCity(City city, String newCityName);
+    public abstract ResultCode renameCity(City city, String newCityName);
 
     /**
      * Adds a player's {@link UUID} to a city to make him a resident of that
@@ -75,7 +82,7 @@ public abstract class DatabaseHandler {
      * @param city
      * @return
      */
-    public abstract boolean addPlayerToCity(Player player, City city);
+    public abstract ResultCode addPlayerToCity(Player player, City city);
 
     /**
      * Looks up if there are any cities situated in that chunk and returns it if

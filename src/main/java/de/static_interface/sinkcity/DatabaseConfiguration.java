@@ -1,11 +1,9 @@
 package de.static_interface.sinkcity;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Properties;
@@ -23,12 +21,12 @@ public class DatabaseConfiguration extends Properties {
     }
 
     private DatabaseConfiguration(SinkCity sinkCity) {
-        file = new File(sinkCity.getDataFolder().getAbsolutePath(), "database.cfg.xml");
+        file = new File(sinkCity.getDataFolder().getAbsolutePath(), "database.cfg.properties");
         if ((file.exists())) {
             // Load from file.
             try {
-                InputStream reader = new FileInputStream(file);
-                loadFromXML(reader);
+                Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8);
+                load(reader);
             } catch (IOException e) {
                 Bukkit.getLogger().log(Level.SEVERE, "Could not read default configuration: an IO-Exception caused SinkCity to fail. Deactivating.", e);
                 Bukkit.getPluginManager().disablePlugin(sinkCity);
@@ -39,8 +37,9 @@ public class DatabaseConfiguration extends Properties {
             addDefaults();
             try {
                 Files.createFile(file.toPath());
-                OutputStream writer = new FileOutputStream(file);
-                storeToXML(writer, "Please make this configuration match your needs.", StandardCharsets.UTF_8.name());
+                Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8);
+                store(writer, "Please make this configuration match your needs.");
+                writer.close();
                 Bukkit.getLogger().log(Level.SEVERE, "A default configurarion for databases has been written. Please make it match your needs first.");
                 Bukkit.getPluginManager().disablePlugin(sinkCity);
             } catch (IOException e) {
