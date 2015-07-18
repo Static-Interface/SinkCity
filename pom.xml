@@ -9,7 +9,7 @@
       <snapshots>
         <enabled>true</enabled>
         <updatePolicy>always</updatePolicy>
-            </snapshots>
+      </snapshots>
     </repository>
   </repositories>
   <properties>
@@ -36,6 +36,25 @@
         <configuration>
           <source>1.7</source>
           <target>1.7</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <appendAssemblyId>false</appendAssemblyId>
+          <finalName>SinkCity_${project.version}</finalName>
         </configuration>
       </plugin>
     </plugins>
