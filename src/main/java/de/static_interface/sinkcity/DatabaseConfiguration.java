@@ -37,7 +37,11 @@ public class DatabaseConfiguration extends Properties {
             addDefaults();
             try {
                 Files.createFile(file.toPath());
-                Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8);
+            } catch (IOException e1) {
+                Bukkit.getLogger().log(Level.SEVERE, "Could not create default configuration: an IO-Exception caused SinkCity to fail. Deactivating", e1);
+                Bukkit.getPluginManager().disablePlugin(sinkCity);
+            }
+            try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
                 store(writer, "Please make this configuration match your needs.");
                 writer.close();
                 Bukkit.getLogger().log(Level.SEVERE, "A default configurarion for databases has been written. Please make it match your needs first.");

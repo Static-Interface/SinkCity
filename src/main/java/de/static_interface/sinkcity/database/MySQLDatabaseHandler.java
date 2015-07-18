@@ -24,6 +24,7 @@ import de.static_interface.sinkcity.DatabaseConfiguration;
 import de.static_interface.sinkcity.LanguageConfiguration;
 import de.static_interface.sinkcity.SinkCity;
 
+@SuppressWarnings("resource")
 public class MySQLDatabaseHandler extends DatabaseHandler {
 
     private Connection connection;
@@ -383,7 +384,10 @@ public class MySQLDatabaseHandler extends DatabaseHandler {
             while (resultSet.next()) {
                 cityName = resultSet.getString("cityname");
                 // TODO: Check performance.
+                final long startTime = System.currentTimeMillis();
                 city = loadCity(cityName, true);
+                final long endTime = System.currentTimeMillis();
+                System.out.println("Needed time for loading city " + cityName + ": " + (endTime - startTime));
                 cities.add(city);
             }
         } catch (SQLException e) {
