@@ -5,27 +5,32 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 public abstract class DatabaseHandler {
 
     /**
-     * Stores the {@link City} instance to the database in a way, that every
-     * detail about the city can be retrieved from it.
+     * Creates a new {@link City} instance and stores it to the database.
      * 
      * @param city
      *            The city to store.
-     * @return
+     * @return 0 if everything worked out fine<br>
+     *         -1 if the city name is "null" or <code>null</code><br>
+     *         -2 if the cityid or the cityname is already taken<br>
+     *         -3 if there is a city at the current chunk<br>
      */
-    public abstract ResultCode storeCity(City city);
+    public abstract City storeCity(String cityName, UUID cityId, Player mayor, Location spawn);
 
     /**
      * Updates a {@link City} in the database.
      * 
      * @param city
-     * @return
+     * @return 0 if the city has been updated<br>
+     *         -1 if the city name is "null" or <code>null</code><br>
+     *         -2 if the city doesn't exist<br>
      */
-    public abstract ResultCode updateCity(City city);
+    public abstract int updateCity(City city);
 
     /**
      * Builds a {@link City} instance from the information stored in the
@@ -48,9 +53,10 @@ public abstract class DatabaseHandler {
      * 
      * @param city
      *            The {@link City} instance to delete.
-     * @return
+     * @return 0 if the city has been dropped<br>
+     *         -1 if the city doesn't exist<br>
      */
-    public abstract ResultCode dropCity(City city);
+    public abstract int dropCity(City city);
 
     /**
      * @return A list of all cities that are stored in the database. Never
@@ -70,9 +76,10 @@ public abstract class DatabaseHandler {
      * 
      * @param city
      * @param newCityName
-     * @return
+     * @return <code>true</code> if the city has been renamed successfully<br>
+     *         <code>false</code> if an internal exception occurred
      */
-    public abstract ResultCode renameCity(City city, String newCityName);
+    public abstract boolean renameCity(City city, String newCityName);
 
     /**
      * Adds a player's {@link UUID} to a city to make him a resident of that
@@ -80,9 +87,21 @@ public abstract class DatabaseHandler {
      * 
      * @param player
      * @param city
-     * @return
+     * @return 0 if the player has been added successfully<br>
+     *         -1 if the city doesn't exist<br>
      */
-    public abstract ResultCode addPlayerToCity(Player player, City city);
+    public abstract int addPlayerToCity(Player player, City city);
+
+    /**
+     * Removes a player's {@link UUID} from a city to un-resident him from that
+     * {@link City}.
+     * 
+     * @param player
+     * @param city
+     * @return 0 if the player has been removed successfully<br>
+     *         -1 if the city doesn't exist<br>
+     */
+    public abstract int removePlayerFromCity(Player player, City city);
 
     /**
      * Looks up if there are any cities situated in that chunk and returns it if

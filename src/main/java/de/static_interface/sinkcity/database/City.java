@@ -11,45 +11,77 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import de.static_interface.sinkcity.CityPermissions;
+import de.static_interface.sinkcity.CitySettings;
+import de.static_interface.sinkcity.SinkCity;
+import de.static_interface.sinkcity.api.Plugin;
+
 public class City {
 
+    /**
+     * The world where the city's homechunk is in.
+     */
     private World world;
+    /**
+     * A list of {@link Chunk}s this city owns.
+     */
     private List<Chunk> chunks;
-    private Chunk homeChunk;
-    private int spawnX, spawnY, spawnZ;
+    /**
+     * The approximate spawn position's coordinates.
+     */
+    private double spawnX, spawnY, spawnZ;
+    /**
+     * A list of {@link UUID}s of all the residents.
+     */
     private List<UUID> residents;
-    private List<UUID> assistants;
-    private UUID mayor;
+    /**
+     * The unique ID of this city.
+     */
     private UUID cityId;
+    /**
+     * The city name. May not be unique, may change.
+     */
     private String cityName;
-    private int citySettings;
+    /**
+     * A map of all the city settings (i.e. the settings that are different from
+     * the default values)
+     */
+    private Map<String, Object> citySettings;
+    /**
+     * A {@link Map} of {@link Chunk}s that have owners in the city (i.e.
+     * someone bought it)
+     */
     private Map<Chunk, UUID> ownedChunks;
 
-    protected City(String cityName, UUID cityId) {
-        this.cityName = cityName;
-        this.cityId = cityId;
-    }
+    /**
+     * A map of the residents with their respective ranks (i.e. the ID of their
+     * ranks). Will not be filled until the city has been stored once.
+     */
+    private Map<UUID, Integer> residentRanks;
+
+    /**
+     * A map of the ranks associated with the granted permissions per rank.
+     */
+    private Map<Integer, List<CityPermissions>> rankPermissions;
 
     public City(String cityName, UUID cityId, Location spawn, Player mayor) {
         this.cityName = cityName;
         this.cityId = cityId;
         this.world = spawn.getWorld();
-        this.homeChunk = spawn.getChunk();
         this.chunks = new ArrayList<Chunk>();
-        this.chunks.add(this.getHomeChunk());
+        this.chunks.add(spawn.getChunk());
         this.spawnX = spawn.getBlockX();
         this.spawnY = spawn.getBlockY();
         this.spawnZ = spawn.getBlockZ();
         this.ownedChunks = new HashMap<Chunk, UUID>();
-        this.citySettings = 0;
+        this.citySettings = new HashMap<String, Object>();
         this.residents = new ArrayList<UUID>();
         this.residents.add(mayor.getUniqueId());
-        this.assistants = new ArrayList<UUID>();
-        this.assistants.add(mayor.getUniqueId());
-        this.mayor = mayor.getUniqueId();
+        this.residentRanks = new HashMap<UUID, Integer>();
+        this.rankPermissions = new HashMap<Integer, List<CityPermissions>>();
     }
 
-    protected void setCitySettings(int citySettings) {
+    protected void setCitySettings(Map<String, Object> citySettings) {
         this.citySettings = citySettings;
     }
 
@@ -63,10 +95,6 @@ public class City {
         this.spawnZ = spawnZ;
     }
 
-    protected void setHomeChunk(Chunk homeChunk) {
-        this.homeChunk = homeChunk;
-    }
-
     protected void setChunks(List<Chunk> chunks) {
         this.chunks = chunks;
     }
@@ -75,20 +103,20 @@ public class City {
         this.residents = residents;
     }
 
-    protected void setAssistants(List<UUID> assistants) {
-        this.assistants = assistants;
-    }
-
-    protected void setMayor(UUID mayor) {
-        this.mayor = mayor;
-    }
-
     protected void setOwnedChunks(Map<Chunk, UUID> ownedChunks) {
         this.ownedChunks = ownedChunks;
     }
 
     protected void setCityName(String cityName) {
         this.cityName = cityName;
+    }
+
+    protected void setUserRank(UUID playerId, Integer rank) {
+        this.residentRanks.put(playerId, rank);
+    }
+
+    protected void setRankPermission(Integer rank, List<CityPermissions> permissions) {
+        this.rankPermissions.put(rank, permissions);
     }
 
     public World getWorld() {
@@ -112,20 +140,6 @@ public class City {
     }
 
     /**
-     * @return The {@link UUID}s of the assistants.
-     */
-    public List<UUID> getAssistants() {
-        return this.assistants;
-    }
-
-    /**
-     * @return The {@link UUID} of the mayor of this city.
-     */
-    public UUID getMayor() {
-        return this.mayor;
-    }
-
-    /**
      * @return The {@link UUID} of this city.
      */
     public UUID getCityId() {
@@ -142,39 +156,63 @@ public class City {
     /**
      * @return The city settings as an <code>int</code>.
      */
-    public int getCitySettings() {
+    public Map<String, Object> getCitySettings() {
         return this.citySettings;
     }
 
     /**
-     * @return The x-coordinate of the feet on the spawn point.
+     * @return The spawn's location
      */
-    public int getSpawnX() {
-        return this.spawnX;
+    public Location getSpawn() {
+        return new Location(this.world, this.spawnX, this.spawnY, this.spawnZ);
     }
 
     /**
-     * @return The y-coordinate of the feet on the spawn point.
+     * @return The chunks in the city that someone bought, with the UUID of the
+     *         owner.
      */
-    public int getSpawnY() {
-        return this.spawnY;
-    }
-
-    /**
-     * @return The z-coordinate of the feet on the spawn point.
-     */
-    public int getSpawnZ() {
-        return this.spawnZ;
-    }
-
-    /**
-     * @return The home chunk of the city.
-     */
-    public Chunk getHomeChunk() {
-        return this.homeChunk;
-    }
-
     public Map<Chunk, UUID> getOwnedChunks() {
         return this.ownedChunks;
+    }
+
+    /**
+     * @return The ID's of the ranks associated with the granted permissions as
+     *         a map.
+     */
+    public Map<Integer, List<CityPermissions>> getRankPermissions() {
+        return this.rankPermissions;
+    }
+
+    /**
+     * @return The residents associated with their respective ranks' ID.
+     */
+    public Map<UUID, Integer> getResidentRanks() {
+        return this.residentRanks;
+    }
+
+    /**
+     * Updates a <b>core</b> setting.
+     * 
+     * @param setting
+     *            The {@link CitySettings} to change.
+     * @param value
+     *            The new value.
+     */
+    public void updateSetting(CitySettings setting, Object value) {
+        this.citySettings.put(SinkCity.class.getName() + "." + setting.name(), value);
+    }
+
+    /**
+     * Updates a plugin setting.
+     * 
+     * @param pluginClass
+     *            The main class of the plugin.
+     * @param settingName
+     *            The name of the setting.
+     * @param value
+     *            The value of the setting.
+     */
+    public void updateCustomSetting(Class<? extends Plugin> pluginClass, String settingName, Object value) {
+        this.citySettings.put(pluginClass.getName() + "." + settingName, value);
     }
 }

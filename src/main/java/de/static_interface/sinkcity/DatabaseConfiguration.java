@@ -11,7 +11,9 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 
-public class DatabaseConfiguration extends Properties {
+import de.static_interface.sinklibrary.database.DatabaseConnectionInfo;
+
+public class DatabaseConfiguration extends Properties implements DatabaseConnectionInfo {
 
     private static DatabaseConfiguration INSTANCE;
     private static File file;
@@ -53,8 +55,42 @@ public class DatabaseConfiguration extends Properties {
         }
     }
 
+    @Override
+    public String getUsername() {
+        return getString("MYSQL.USER");
+    }
+
+    @Override
+    public String getTablePrefix() {
+        return "SinkCity_";
+    }
+
+    @Override
+    public int getPort() {
+        return Integer.parseInt(get("MYSQL.PORT").toString());
+    }
+
+    @Override
+    public String getPassword() {
+        return getString("MYSQL.PASS");
+    }
+
+    @Override
+    public String getDatabaseName() {
+        return getString("MYSQL.DB");
+    }
+
+    @Override
+    public String getAddress() {
+        return getString("MYSQL.SERVER");
+    }
+
     public static DatabaseConfiguration getInstance() {
         return INSTANCE;
+    }
+
+    public String getString(String key) {
+        return getInstance().get(key).toString();
     }
 
     private void addDefaults() {
@@ -63,5 +99,6 @@ public class DatabaseConfiguration extends Properties {
         this.setProperty("MYSQL.PASS", "");
         this.setProperty("MYSQL.DB", "SinkCity");
         this.setProperty("MYSQL.SERVER", "127.0.0.1");
+        this.setProperty("MYSQL.PORT", "3306");
     }
 }

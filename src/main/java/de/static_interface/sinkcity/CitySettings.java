@@ -1,35 +1,21 @@
 package de.static_interface.sinkcity;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public enum CitySettings {
 
-    FIRE(0b0000_0001),
-    MOBS(0b0000_0010),
-    TNT_BUILD(0b0000_0100),
-    TNT_EXPLODE(0b0000_1000),
-    EXPLOSION(0b0001_0000),
-    OPEN_CITY(0b0010_0000),
-    MONSTERS(0b0100_0000);
+    FIRE,
+    MOBS,
+    TNT_BUILD,
+    TNT_EXPLODE,
+    EXPLOSION,
+    OPEN_CITY,
+    MONSTERS;
 
-    private int activatedPattern;
-
-    private CitySettings(int activatedPattern) {
-        this.activatedPattern = activatedPattern;
-    }
-
-    public static List<CitySettings> getActivatedCitySettings(int citySettings) {
-        List<CitySettings> activatedSettings = new ArrayList<CitySettings>();
-        for (CitySettings settings : CitySettings.values()) {
-            if ((citySettings & settings.activatedPattern) == settings.activatedPattern)
-                activatedSettings.add(settings);
+    public static CitySettings forName(String name) {
+        for (CitySettings citySettings : CitySettings.values()) {
+            if (citySettings.equals(name.toUpperCase()))
+                return citySettings;
         }
-
-        return activatedSettings;
+        return null;
     }
 
-    public static boolean settingActivated(CitySettings setting, int citySettings) {
-        return ((setting.activatedPattern & citySettings) == setting.activatedPattern);
-    }
 }

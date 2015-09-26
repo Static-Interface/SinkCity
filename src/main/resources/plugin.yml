@@ -2,34 +2,33 @@ name: SinkCity
 version: ${project.version}
 description: A plugin that provides a city management system.
 author: Shadow1Raven
-authors: [Trojaner]
 main: de.static_interface.sinkcity.SinkCity
-depend: [SinkLibrary]
+depend: [Vault, SinkLibrary]
 
 commands:
     sinkcity:
         aliases: [sc]
         description: Information about the SinkCity plugin.
         usage: /<command>
-        permission: sinkcity.management.*
+#        permission: sinkcity.management.*
 
     city:
         aliases: [c, town, t]
         description: City management command
         usage: /<command>
-        permission: sinkcity.city.*
+#        permission: sinkcity.city.*
 
     resident:
         aliases: [res, r]
         description: Resident related management
         usage: /<command>
-        permission: sinkcity.resident.*
+#        permission: sinkcity.resident.*
 
     war:
         aliases: [war]
-        description: War! Rebillion!!
+        description: War! Rebellion!!
         usage: /<command>
-        permission: sinkcity.war.*
+#        permission: sinkcity.war.*
 
     plot:
         aliases: [lot]
@@ -37,53 +36,53 @@ commands:
         usage: /<command>
         permission: sinkcity.plot.*
 
-permissions:
-    sinkcity.management.*:
-        description: Allows all sinkcity management commands.
-        default: op
-        children:
-            sinkcity.management.map: true
-            sinkcity.management.prices: true
-            sinkcity.management.highscore: true
-            sinkcity.management.clock: true
-            sinkcity.management.statistics: true
-            sinkcity.management.version: false
-    sinkcity.plot.*:
-        description: Allows all commands related to inner-city plots.
-        default: op
-        children:
-            sinkcity.plot.buy: true
-            sinkcity.plot.sell: true
-            sinkcity.plot.offer: true
-            sinkcity.plot.listbought: true
-
-    sinkcity.war.*:
-        description: Allows initiating and ending a war.
-        default: op
-        children:
-            sinkcity.war.init: false
-            sinkcity.war.end: false
-            sinkcity.war.info: true
-
-    sinkcity.resident.*:
-        description: Allows all commands related to residents.
-        default: op
-        children:
-            sinkcity.resident.info: true
-            sinkcity.resident.list: false
-            sinkcity.resident.tax: false
-            sinkcity.resident.set: true
-            sinkcity.resident.friend: true
-            sinkcity.resident.spawn: true
-
-    sinkcity.city.*:
-        description: Allows all city commands.
-        default: op
-        children:
-            sinkcity.city.create.others: false
-            sinkcity.city.create.self: false
-            sinkcity.city.delete: false
-            sinkcity.city.list: true
-            sinkcity.city.join: true
-            sinkcity.city.leave: true
-            sinkcity.city.bank: false
+#permissions:
+#    sinkcity.management.*:
+#        description: Allows all sinkcity management commands.
+#        default: op
+#        children:
+#            sinkcity.management.map: true
+#            sinkcity.management.prices: true
+#            sinkcity.management.highscore: true
+#            sinkcity.management.clock: true
+#            sinkcity.management.statistics: true
+#            sinkcity.management.version: false
+#    sinkcity.plot.*:
+#        description: Allows all commands related to inner-city plots.
+#        default: op
+#        children:
+#            sinkcity.plot.buy: true
+#            sinkcity.plot.sell: true
+#            sinkcity.plot.offer: true
+#            sinkcity.plot.listbought: true
+#
+#    sinkcity.war.*:
+#        description: Allows initiating and ending a war.
+#        default: op
+#        children:
+#            sinkcity.war.init: false
+#            sinkcity.war.end: false
+#            sinkcity.war.info: true
+#
+#    sinkcity.resident.*:
+#        description: Allows all commands related to residents.
+#        default: op
+#        children:
+#            sinkcity.resident.info: true
+#            sinkcity.resident.list: false
+#            sinkcity.resident.tax: false
+#            sinkcity.resident.set: true
+#            sinkcity.resident.friend: true
+#            sinkcity.resident.spawn: true
+#
+#    sinkcity.city.*:
+#        description: Allows all city commands.
+#        default: op
+#        children:
+#            sinkcity.city.create.others: false
+#            sinkcity.city.create.self: false
+#            sinkcity.city.delete: false
+#            sinkcity.city.list: true
+#            sinkcity.city.join: true
+#            sinkcity.city.leave: true
+#            sinkcity.city.bank: false
