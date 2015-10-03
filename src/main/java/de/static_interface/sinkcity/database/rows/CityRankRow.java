@@ -7,12 +7,12 @@ import de.static_interface.sinklibrary.database.annotation.ForeignKey;
 
 public class CityRankRow implements Row {
 
-    @Column(primaryKey = true, autoIncrement = true)
-    public Integer rankId;
-
-    @Column
+    @Column(keyLength = 36)
     @ForeignKey(table = CityTable.class, column = "cityId")
     public String cityId;
+
+    @Column(primaryKey = true, autoIncrement = true)
+    public Integer rankId;
 
     @Column
     public String rankName;

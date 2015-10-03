@@ -5,7 +5,7 @@ import de.static_interface.sinklibrary.database.annotation.Column;
 
 public class CityRow implements Row {
 
-    @Column(primaryKey = true)
+    @Column(primaryKey = true, keyLength = 36)
     public String cityId;
 
     @Column

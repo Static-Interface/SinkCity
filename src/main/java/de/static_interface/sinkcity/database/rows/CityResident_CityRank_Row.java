@@ -8,12 +8,13 @@ import de.static_interface.sinklibrary.database.annotation.ForeignKey;
 
 public class CityResident_CityRank_Row implements Row {
 
-    @Column
+    // This is a Java UUID (36 chars length)
+    @Column(keyLength = 36)
     @ForeignKey(table = CityResident_City_Table.class, column = "userId")
     public String userId;
 
     @Column
     @ForeignKey(table = CityRankTable.class, column = "rankId")
-    public String rankId;
+    public Integer rankId;
 
 }

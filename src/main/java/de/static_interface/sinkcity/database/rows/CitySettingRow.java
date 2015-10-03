@@ -7,7 +7,7 @@ import de.static_interface.sinklibrary.database.annotation.ForeignKey;
 
 public class CitySettingRow implements Row {
 
-    @Column
+    @Column(keyLength = 36)
     @ForeignKey(table = CityTable.class, column = "cityId")
     public String cityId;
 

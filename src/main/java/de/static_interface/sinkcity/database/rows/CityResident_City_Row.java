@@ -7,10 +7,11 @@ import de.static_interface.sinklibrary.database.annotation.ForeignKey;
 
 public class CityResident_City_Row implements Row {
 
-    @Column(primaryKey = true)
+    // This is a Java UUID (36 chars length)
+    @Column(primaryKey = true, keyLength = 36)
     public String userId;
 
-    @Column
+    @Column(keyLength = 36)
     @ForeignKey(table = CityTable.class, column = "cityId")
     public String cityId;
 

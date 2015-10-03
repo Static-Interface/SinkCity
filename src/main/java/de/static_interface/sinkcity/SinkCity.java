@@ -23,21 +23,21 @@ import de.static_interface.sinkcity.database.rows.CityChunkSettingRow;
 import de.static_interface.sinkcity.database.rows.CityChunk_CityResident_Row;
 import de.static_interface.sinkcity.database.rows.CityRankPermissionRow;
 import de.static_interface.sinkcity.database.rows.CityRankRow;
-import de.static_interface.sinkcity.database.rows.CityRank_City_Row;
 import de.static_interface.sinkcity.database.rows.CityResident_CityRank_Row;
 import de.static_interface.sinkcity.database.rows.CityResident_City_Row;
 import de.static_interface.sinkcity.database.rows.CityRow;
 import de.static_interface.sinkcity.database.rows.CitySettingRow;
+import de.static_interface.sinkcity.database.rows.City_CityRank_Row;
 import de.static_interface.sinkcity.database.tables.CityChunkSettingTable;
 import de.static_interface.sinkcity.database.tables.CityChunkTable;
 import de.static_interface.sinkcity.database.tables.CityChunk_CityResident_Table;
 import de.static_interface.sinkcity.database.tables.CityRankPermissionTable;
 import de.static_interface.sinkcity.database.tables.CityRankTable;
-import de.static_interface.sinkcity.database.tables.CityRank_City_Table;
 import de.static_interface.sinkcity.database.tables.CityResident_CityRank_Table;
 import de.static_interface.sinkcity.database.tables.CityResident_City_Table;
 import de.static_interface.sinkcity.database.tables.CitySettingTable;
 import de.static_interface.sinkcity.database.tables.CityTable;
+import de.static_interface.sinkcity.database.tables.City_CityRank_Table;
 import de.static_interface.sinkcity.listeners.BlockListener;
 import de.static_interface.sinklibrary.SinkLibrary;
 import de.static_interface.sinklibrary.database.AbstractTable;
@@ -132,7 +132,7 @@ public class SinkCity extends JavaPlugin {
             AbstractTable<CitySettingRow> citySettingTable = new CitySettingTable(database);
 
             // relation tables
-            AbstractTable<CityRank_City_Row> cityRankCityTable = new CityRank_City_Table(database);
+            AbstractTable<City_CityRank_Row> cityRankCityTable = new City_CityRank_Table(database);
             AbstractTable<CityResident_CityRank_Row> cityResidentCityRankTable = new CityResident_CityRank_Table(database);
             AbstractTable<CityChunk_CityResident_Row> cityChunkCityResidentTable = new CityChunk_CityResident_Table(database);
 
@@ -158,7 +158,7 @@ public class SinkCity extends JavaPlugin {
             this.tables.put(CityRankPermissionRow.class, cityRankPermissionTable);
             this.tables.put(CitySettingRow.class, citySettingTable);
 
-            this.tables.put(CityRank_City_Row.class, cityRankCityTable);
+            this.tables.put(City_CityRank_Row.class, cityRankCityTable);
             this.tables.put(CityResident_CityRank_Row.class, cityResidentCityRankTable);
             this.tables.put(CityChunk_CityResident_Row.class, cityChunkCityResidentTable);
         } catch (SQLException e) {

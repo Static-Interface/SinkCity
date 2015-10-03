@@ -8,21 +8,13 @@ import de.static_interface.sinklibrary.database.annotation.ForeignKey;
 public class CityChunkSettingRow implements Row {
 
     @Column
-    @ForeignKey(table = CityChunkTable.class, column = "coordinateX")
-    public Integer coordinateX;
+    @ForeignKey(table = CityChunkTable.class, column = "chunkId")
+    public Integer chunkId;
 
-    @Column
-    @ForeignKey(table = CityChunkTable.class, column = "coordinateZ")
-    public Integer coordinateZ;
-
-    @Column
-    @ForeignKey(table = CityChunkTable.class, column = "worldId")
-    public String worldId;
-
-    @Column(primaryKey = true)
+    @Column(primaryKey = true, keyLength = 255)
     public String settingName;
 
-    @Column
+    @Column(keyLength = 255)
     public String settingValue;
 
 }
